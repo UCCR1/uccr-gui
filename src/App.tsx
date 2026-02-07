@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import "./App.css";
+import { Button } from "./components/ui/button";
 
 function App() {
     const [devices, setDevices] = useState<string[]>([]);
@@ -14,6 +15,7 @@ function App() {
     return (
         <main>
             <h1>Welcome to UCCR GUI</h1>
+            <Button>Hello There</Button>
             {connected ? (
                 <h2>Conncted</h2>
             ) : (
