@@ -14,31 +14,7 @@ function App() {
     }, []);
 
     return (
-        <main>
-            <h1>Welcome to UCCR GUI</h1>
-            <Button>Hello There</Button>
-            {connected ? (
-                <h2>Conncted</h2>
-            ) : (
-                <>
-                    <h2>Devices:</h2>
-
-                    {devices.map((device) => (
-                        <button
-                            key={device}
-                            type="button"
-                            onClick={() =>
-                                invoke("connect", { port: device }).then(() =>
-                                    setConnected(true),
-                                )
-                            }
-                            className="bg-slate-300 p-2 rounded-md hover:bg-slate-400 cursor-pointer"
-                        >
-                            {device}
-                        </button>
-                    ))}
-                </>
-            )}{" "}
+        <main className="h-screen pt-10">
             <MapComponent />
         </main>
     );

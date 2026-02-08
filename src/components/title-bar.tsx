@@ -10,7 +10,7 @@ export default function TitleBar() {
 
     return (
         <div
-            className="bg-sidebar-accent flex justify-between p-1 items-center"
+            className="bg-sidebar-accent flex justify-between items-center fixed z-10 w-full h-10"
             data-tauri-drag-region
         >
             <div />

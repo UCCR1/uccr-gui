@@ -11,6 +11,10 @@ export default defineConfig(async () => ({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
+            "ts-matrix": path.resolve(
+                __dirname,
+                "node_modules/ts-matrix/dist/ts-matrix.es.js",
+            ),
         },
     },
 
