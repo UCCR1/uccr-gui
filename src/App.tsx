@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import "./App.css";
-import MapComponent from "./components/map-component";
+import MapComponent from "./components/map";
 import { Button } from "./components/ui/button";
 
 function App() {

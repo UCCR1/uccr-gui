@@ -1,8 +1,24 @@
-import { Matrix, type Vector } from "ts-matrix";
+import { Matrix, Vector } from "ts-matrix";
+import * as zod from "zod";
+import { vectorData } from "../math-types";
 import { EditorSpline } from ".";
 
-export default class CubicBSpline extends EditorSpline {
-    private editorPoints: Vector[] = [];
+const NAME = "cubic-b-spline";
+
+export const cubicBSplineData = zod.object({
+    type: zod.literal(NAME),
+    points: zod.array(vectorData),
+});
+
+export type CubicBSplineData = zod.infer<typeof cubicBSplineData>;
+
+export default class CubicBSpline extends EditorSpline<CubicBSplineData> {
+    public static withInitialPoint(point: Vector): CubicBSpline {
+        return new CubicBSpline({
+            type: NAME,
+            points: [vectorData.parse(point.values)],
+        });
+    }
 
     public getCharacteristicMatrix(): Matrix {
         return new Matrix(4, 4, [
@@ -13,17 +29,21 @@ export default class CubicBSpline extends EditorSpline {
         ]);
     }
 
-    public getControlPoints(): Vector[][] {
-        if (this.editorPoints.length < 2) {
+    public getControlPoints(mousePoint?: Vector): Vector[][] {
+        const editorPoints = mousePoint
+            ? [...this.getEditorPoints(), mousePoint]
+            : this.getEditorPoints();
+
+        if (editorPoints.length < 2) {
             return [];
         }
 
         const points = [
-            this.editorPoints[0],
-            this.editorPoints[0],
-            ...this.editorPoints,
-            this.editorPoints[this.editorPoints.length - 1],
-            this.editorPoints[this.editorPoints.length - 1],
+            editorPoints[0],
+            editorPoints[0],
+            ...editorPoints,
+            editorPoints[editorPoints.length - 1],
+            editorPoints[editorPoints.length - 1],
         ];
 
         const result: Vector[][] = [];
@@ -36,18 +56,42 @@ export default class CubicBSpline extends EditorSpline {
     }
 
     public getEditorPoints(): Vector[] {
-        return this.editorPoints;
+        return this.data.points.map((x) => new Vector(x));
     }
 
-    public addEditorPoint(index: number, position: Vector): void {
-        this.editorPoints.splice(index, 0, position);
+    public addEditorPoint(index: number, position: Vector): CubicBSplineData {
+        const newPoints = [...this.data.points];
+
+        newPoints.splice(index, 0, vectorData.parse(position.values));
+
+        return {
+            type: NAME,
+            points: newPoints,
+        };
     }
 
-    public updateEditorPoint(index: number, position: Vector): void {
-        this.editorPoints[index] = position;
+    public updateEditorPoint(
+        index: number,
+        position: Vector,
+    ): CubicBSplineData {
+        const newPoints = [...this.data.points];
+
+        newPoints[index] = vectorData.parse(position.values);
+
+        return {
+            type: NAME,
+            points: newPoints,
+        };
     }
 
-    public removeEditorPoint(index: number): void {
-        this.editorPoints.splice(index, 1);
+    public removeEditorPoint(index: number): CubicBSplineData {
+        const newPoints = [...this.data.points];
+
+        newPoints.splice(index, 1);
+
+        return {
+            type: NAME,
+            points: newPoints,
+        };
     }
 }

@@ -6,27 +6,33 @@ interface MathematicalSpline {
     getControlPoints(): Vector[][];
 }
 
-interface SplineControls {
-    addEditorPoint(index: number, position: Vector): void;
-    updateEditorPoint(index: number, newPosition: Vector): void;
-    removeEditorPoint(index: number): void;
+interface SplineControls<T> {
+    addEditorPoint(index: number, position: Vector): T;
+    updateEditorPoint(index: number, newPosition: Vector): T;
+    removeEditorPoint(index: number): T;
     getEditorPoints(): Vector[];
 }
 
-export abstract class EditorSpline
-    implements MathematicalSpline, SplineControls
+export abstract class EditorSpline<T>
+    implements MathematicalSpline, SplineControls<T>
 {
-    public abstract getCharacteristicMatrix(): Matrix;
-    public abstract getControlPoints(): Vector[][];
+    constructor(public readonly data: T) {}
 
-    public abstract addEditorPoint(index: number, position: Vector): void;
-    public abstract updateEditorPoint(index: number, newPosition: Vector): void;
-    public abstract removeEditorPoint(index: number): void;
+    public abstract getCharacteristicMatrix(): Matrix;
+    public abstract getControlPoints(mousePoint?: Vector): Vector[][];
+
+    public abstract addEditorPoint(index: number, position: Vector): T;
+    public abstract updateEditorPoint(index: number, newPosition: Vector): T;
+    public abstract removeEditorPoint(index: number): T;
+
     public abstract getEditorPoints(): Vector[];
 
-    public renderSpline(maxSegmentLength: number): Vector[] {
+    public renderSpline(
+        maxSegmentLength: number,
+        mousePoint?: Vector,
+    ): Vector[] {
         const characteristicMatrix = this.getCharacteristicMatrix();
-        const controlPoints = this.getControlPoints();
+        const controlPoints = this.getControlPoints(mousePoint);
 
         if (controlPoints.length === 0) {
             return [];
