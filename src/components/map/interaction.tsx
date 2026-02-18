@@ -1,6 +1,6 @@
-import { lineString } from "@turf/helpers";
+import { featureCollection, lineString, point } from "@turf/helpers";
 import { Layer, Source } from "@vis.gl/react-maplibre";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Vector } from "ts-matrix";
 import useMapCallback from "@/hooks/map/use-map-callback";
 import useMouseMapLocation from "@/hooks/map/use-mouse-map-location";
@@ -11,11 +11,8 @@ import {
     type SplineData,
 } from "@/lib/splines/spline-data";
 import { useAppDispatch, useAppSelector } from "@/state";
-import {
-    addSpline,
-    setActiveSpline,
-    updateSpline,
-} from "@/state/autonEditorSlice";
+import { addSpline, updateSpline } from "@/state/autonEditorSlice";
+import InteractiveLayer, { IS_HOVERED_KEY } from "./interactive-layer";
 
 export default function MapInteraction() {
     const activeSplineIndex = useAppSelector(
@@ -57,12 +54,6 @@ export default function MapInteraction() {
         [activeSpline, activeTool, dispatch, addSpline],
     );
 
-    useEffect(() => {
-        if (activeTool === "drag" && activeSpline !== null) {
-            dispatch(setActiveSpline(null));
-        }
-    }, [activeTool, activeSpline, dispatch]);
-
     return (
         <>
             {activeSpline && (
@@ -81,19 +72,21 @@ interface SplineHandlesProps {
 }
 
 function SplineHandles({ controller, updateData }: SplineHandlesProps) {
-    const editorPoints = useMemo(() => {
-        return controller.getEditorPoints();
-    }, [controller]);
+    const editorPoints = controller.getEditorPoints();
+
+    const activeTool = useAppSelector((state) => state.autonEditor.activeTool);
 
     useMapCallback(
         "click",
         (event) => {
-            updateData(
-                controller.addEditorPoint(
-                    editorPoints.length,
-                    new Vector(event.lngLat.toArray()),
-                ),
-            );
+            if (activeTool === "spline") {
+                updateData(
+                    controller.addEditorPoint(
+                        editorPoints.length,
+                        new Vector(event.lngLat.toArray()),
+                    ),
+                );
+            }
         },
         [editorPoints.length, updateData, controller],
     );
@@ -103,39 +96,80 @@ function SplineHandles({ controller, updateData }: SplineHandlesProps) {
     const splinePath = useMemo(() => {
         return lineString(
             controller
-                .renderSpline(0.01, new Vector(mouseLocation.toArray()))
+                .renderSpline(
+                    0.01,
+                    activeTool === "spline"
+                        ? new Vector(mouseLocation.toArray())
+                        : undefined,
+                )
                 .map((vector) => vector.values),
         );
-    }, [controller, mouseLocation]);
+    }, [controller, mouseLocation, activeTool]);
 
     return (
         <>
             {editorPoints.length >= 2 && (
-                <Source
-                    type="geojson"
-                    data={lineString([
-                        ...editorPoints.map((coord) => coord.values),
-                        mouseLocation.toArray(),
-                    ])}
-                >
-                    <Layer
-                        type="line"
-                        paint={{
-                            "line-color": "black",
-                            "line-width": 2,
-                            "line-dasharray": [1, 2],
-                        }}
-                    />
-                    <Layer
-                        type="circle"
-                        paint={{
-                            "circle-radius": 3,
-                            "circle-color": "white",
-                            "circle-stroke-color": "cyan",
-                            "circle-stroke-width": 1,
-                        }}
-                    />
-                </Source>
+                <>
+                    <Source
+                        type="geojson"
+                        data={lineString([
+                            ...editorPoints.map((coord) => coord.values),
+                            ...(activeTool === "spline"
+                                ? [mouseLocation.toArray()]
+                                : []),
+                        ])}
+                    >
+                        <Layer
+                            type="line"
+                            paint={{
+                                "line-color": "black",
+                                "line-width": 2,
+                                "line-dasharray": [1, 2],
+                            }}
+                        />
+                    </Source>
+                    <Source
+                        type="geojson"
+                        generateId
+                        data={featureCollection(
+                            editorPoints.map((coord, index) =>
+                                point(coord.values, {
+                                    index,
+                                }),
+                            ),
+                        )}
+                    >
+                        <InteractiveLayer
+                            id="spline-handles"
+                            type="circle"
+                            paint={{
+                                "circle-radius": 3,
+                                "circle-color": [
+                                    "case",
+                                    [
+                                        "boolean",
+                                        ["feature-state", IS_HOVERED_KEY],
+                                        false,
+                                    ],
+                                    "cyan",
+                                    "white",
+                                ],
+                                "circle-stroke-color": "cyan",
+                                "circle-stroke-width": 1,
+                            }}
+                            onMove={(e) => {
+                                if (activeTool === "drag") {
+                                    updateData(
+                                        controller.updateEditorPoint(
+                                            e.feature.properties.index,
+                                            new Vector(e.lngLat.toArray()),
+                                        ),
+                                    );
+                                }
+                            }}
+                        />
+                    </Source>
+                </>
             )}
 
             <Source type="geojson" data={splinePath}>
