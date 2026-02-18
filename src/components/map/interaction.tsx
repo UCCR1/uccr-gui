@@ -1,6 +1,6 @@
 import { featureCollection, lineString, point } from "@turf/helpers";
 import { Layer, Source } from "@vis.gl/react-maplibre";
-import { act, useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Vector } from "ts-matrix";
 import useMapCallback from "@/hooks/map/use-map-callback";
 import useMouseMapLocation from "@/hooks/map/use-mouse-map-location";
@@ -156,6 +156,7 @@ function SplineHandles({ controller, updateData }: SplineHandlesProps) {
                         )}
                     >
                         <InteractiveLayer
+                            interactionWidth={15}
                             id="spline-handles"
                             type="circle"
                             paint={{
@@ -173,7 +174,8 @@ function SplineHandles({ controller, updateData }: SplineHandlesProps) {
                                 "circle-stroke-color": "cyan",
                                 "circle-stroke-width": 1,
                             }}
-                            onMove={(e) => {
+                            draggable
+                            onDrag={(e) => {
                                 if (activeTool === "drag") {
                                     updateData(
                                         controller.updateEditorPoint(

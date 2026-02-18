@@ -1,22 +1,75 @@
 import { Layer, type LayerProps, useMap } from "@vis.gl/react-maplibre";
-import type { MapGeoJSONFeature, MapMouseEvent } from "maplibre-gl";
+import type {
+    CircleLayerSpecification,
+    FillLayerSpecification,
+    LineLayerSpecification,
+    MapGeoJSONFeature,
+    MapMouseEvent,
+} from "maplibre-gl";
 import { useCallback, useRef } from "react";
 import { useMapLayerCallback } from "@/hooks/map/use-map-callback";
 
 export const IS_HOVERED_KEY = "is-hovered";
 
-export default function InteractiveLayer(
-    props: LayerProps & {
-        id: string;
-        onMove?: (e: MapMouseEvent & { feature: MapGeoJSONFeature }) => void;
-        onClick?: (e: MapMouseEvent & { feature: MapGeoJSONFeature }) => void;
-        onUp?: (e: MapMouseEvent) => void;
-    },
-) {
+type InteractiveLayerProps = Omit<
+    FillLayerSpecification | CircleLayerSpecification | LineLayerSpecification,
+    "source"
+> & {
+    id: string;
+
+    interactionWidth?: number;
+
+    draggable?: boolean;
+    clickable?: boolean;
+
+    onDrag?: (e: MapMouseEvent & { feature: MapGeoJSONFeature }) => void;
+    onClick?: (e: MapMouseEvent & { feature: MapGeoJSONFeature }) => void;
+    onUp?: (e: MapMouseEvent) => void;
+};
+
+export default function InteractiveLayer(props: InteractiveLayerProps) {
+    const hoverable = props.draggable || props.clickable;
+
     const hoveredElement = useRef<MapGeoJSONFeature>(null);
     const dragging = useRef(false);
 
     const map = useMap();
+
+    let interactionId = `${props.id}-interaction`;
+
+    let interactionLayer = null;
+
+    if (props.interactionWidth) {
+        if (props.type === "line") {
+            interactionLayer = (
+                <Layer
+                    {...(props as LayerProps)}
+                    id={interactionId}
+                    type="line"
+                    paint={{
+                        "line-width": props.interactionWidth,
+                        "line-opacity": 0,
+                    }}
+                />
+            );
+        } else if (props.type === "circle") {
+            interactionLayer = (
+                <Layer
+                    {...(props as LayerProps)}
+                    id={interactionId}
+                    type="circle"
+                    paint={{
+                        "circle-radius": props.interactionWidth / 2,
+                        "circle-opacity": 0,
+                    }}
+                />
+            );
+        }
+    }
+
+    if (!interactionLayer) {
+        interactionId = props.id;
+    }
 
     const clearHover = useCallback(() => {
         if (hoveredElement.current && map.current) {
@@ -30,11 +83,11 @@ export default function InteractiveLayer(
 
     const onMove = useCallback(
         (e: MapMouseEvent) => {
-            if (hoveredElement.current && props.onMove) {
+            if (hoveredElement.current && props.draggable) {
                 dragging.current = true;
                 e.target.getCanvas().style.cursor = "grabbing";
 
-                props.onMove(
+                props.onDrag?.(
                     Object.assign(e, { feature: hoveredElement.current }),
                 );
             }
@@ -59,32 +112,32 @@ export default function InteractiveLayer(
 
     useMapLayerCallback(
         "mouseenter",
-        props.id,
+        interactionId,
         (e) => {
             clearHover();
 
             if (!dragging.current) {
-                if (props.onMove) {
+                if (props.draggable) {
                     e.target.getCanvas().style.cursor = "move";
-                } else if (props.onClick) {
+                } else if (props.clickable) {
                     e.target.getCanvas().style.cursor = "pointer";
                 }
             }
 
             hoveredElement.current = e.features?.[0] ?? null;
 
-            if (hoveredElement.current) {
+            if (hoveredElement.current && hoverable) {
                 e.target.setFeatureState(hoveredElement.current, {
                     [IS_HOVERED_KEY]: true,
                 });
             }
         },
-        [props.id, hoveredElement.current],
+        [props.id, hoveredElement.current, hoverable],
     );
 
     useMapLayerCallback(
         "mouseleave",
-        props.id,
+        interactionId,
         (e) => {
             if (dragging.current) {
                 return;
@@ -99,9 +152,9 @@ export default function InteractiveLayer(
 
     useMapLayerCallback(
         "mousedown",
-        props.id,
+        interactionId,
         (e) => {
-            if (props.onMove) {
+            if (props.draggable) {
                 e.target.getCanvas().style.cursor = "grab";
 
                 e.preventDefault();
@@ -116,10 +169,10 @@ export default function InteractiveLayer(
 
     useMapLayerCallback(
         "click",
-        props.id,
+        interactionId,
         (e) => {
-            if (hoveredElement.current && props.onClick) {
-                props.onClick(
+            if (hoveredElement.current && props.clickable) {
+                props.onClick?.(
                     Object.assign(e, { feature: hoveredElement.current }),
                 );
             }
@@ -127,5 +180,10 @@ export default function InteractiveLayer(
         [props.onClick, hoveredElement.current],
     );
 
-    return <Layer {...props} />;
+    return (
+        <>
+            <Layer {...(props as LayerProps)} />
+            {interactionLayer}
+        </>
+    );
 }

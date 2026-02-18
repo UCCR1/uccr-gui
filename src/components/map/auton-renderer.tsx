@@ -23,12 +23,12 @@ export default function AutonRenderer() {
                 }
 
                 return lineString(
-                        getSplineController(x)
-                            .renderSpline(SPLINE_TOLERANCE)
-                            .map((vector) => vector.values),
-                        {
-                            index,
-                        },
+                    getSplineController(x)
+                        .renderSpline(SPLINE_TOLERANCE)
+                        .map((vector) => vector.values),
+                    {
+                        index,
+                    },
                 );
             }),
         );
@@ -39,6 +39,7 @@ export default function AutonRenderer() {
     return (
         <Source type="geojson" data={splinePaths} generateId>
             <InteractiveLayer
+                interactionWidth={15}
                 id="all-splines"
                 type="line"
                 paint={{
@@ -50,6 +51,7 @@ export default function AutonRenderer() {
                         "black",
                     ],
                 }}
+                clickable={activeSplineIndex === null}
                 onClick={(event) => {
                     dispatch(setActiveSpline(event.feature.properties.index));
                 }}
