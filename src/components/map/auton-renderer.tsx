@@ -17,18 +17,20 @@ export default function AutonRenderer() {
     // biome-ignore lint/correctness/useExhaustiveDependencies: Avoid re-rendering all splines when only the currently edited spline is changing, and that is handled elsewhere
     const splinePaths = useMemo(() => {
         return featureCollection(
-            splines
-                .map((x, index) =>
-                    lineString(
+            splines.flatMap((x, index) => {
+                if (index === activeSplineIndex) {
+                    return [];
+                }
+
+                return lineString(
                         getSplineController(x)
                             .renderSpline(SPLINE_TOLERANCE)
                             .map((vector) => vector.values),
                         {
                             index,
                         },
-                    ),
-                )
-                .filter((_, i) => i !== activeSplineIndex),
+                );
+            }),
         );
     }, [activeSplineIndex, splines.length]);
 
