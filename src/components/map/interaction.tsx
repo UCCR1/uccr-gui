@@ -1,9 +1,10 @@
 import { featureCollection, lineString, point } from "@turf/helpers";
 import { Layer, Source } from "@vis.gl/react-maplibre";
-import { useCallback, useMemo } from "react";
+import { act, useCallback, useEffect, useMemo } from "react";
 import { Vector } from "ts-matrix";
 import useMapCallback from "@/hooks/map/use-map-callback";
 import useMouseMapLocation from "@/hooks/map/use-mouse-map-location";
+import useKeyDown from "@/hooks/use-key-down";
 import type { EditorSpline } from "@/lib/splines";
 import CubicBSpline from "@/lib/splines/b-spline";
 import {
@@ -11,7 +12,12 @@ import {
     type SplineData,
 } from "@/lib/splines/spline-data";
 import { useAppDispatch, useAppSelector } from "@/state";
-import { addSpline, updateSpline } from "@/state/autonEditorSlice";
+import {
+    addSpline,
+    setActiveSpline,
+    setActiveTool,
+    updateSpline,
+} from "@/state/autonEditorSlice";
 import InteractiveLayer, { IS_HOVERED_KEY } from "./interactive-layer";
 
 export default function MapInteraction() {
@@ -53,6 +59,16 @@ export default function MapInteraction() {
         },
         [activeSpline, activeTool, dispatch, addSpline],
     );
+
+    useKeyDown(() => {
+        if (activeSpline) {
+            if (activeTool === "spline") {
+                dispatch(setActiveTool("drag"));
+            } else if (activeTool === "drag") {
+                dispatch(setActiveSpline(null));
+            }
+        }
+    }, "Escape");
 
     return (
         <>

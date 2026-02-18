@@ -9,6 +9,7 @@ export default function InteractiveLayer(
     props: LayerProps & {
         id: string;
         onMove?: (e: MapMouseEvent & { feature: MapGeoJSONFeature }) => void;
+        onClick?: (e: MapMouseEvent & { feature: MapGeoJSONFeature }) => void;
         onUp?: (e: MapMouseEvent) => void;
     },
 ) {
@@ -29,11 +30,11 @@ export default function InteractiveLayer(
 
     const onMove = useCallback(
         (e: MapMouseEvent) => {
-            dragging.current = true;
-            e.target.getCanvas().style.cursor = "grabbing";
+            if (hoveredElement.current && props.onMove) {
+                dragging.current = true;
+                e.target.getCanvas().style.cursor = "grabbing";
 
-            if (hoveredElement.current) {
-                props.onMove?.(
+                props.onMove(
                     Object.assign(e, { feature: hoveredElement.current }),
                 );
             }
@@ -63,7 +64,11 @@ export default function InteractiveLayer(
             clearHover();
 
             if (!dragging.current) {
-                e.target.getCanvas().style.cursor = "move";
+                if (props.onMove) {
+                    e.target.getCanvas().style.cursor = "move";
+                } else if (props.onClick) {
+                    e.target.getCanvas().style.cursor = "pointer";
+                }
             }
 
             hoveredElement.current = e.features?.[0] ?? null;
@@ -96,14 +101,30 @@ export default function InteractiveLayer(
         "mousedown",
         props.id,
         (e) => {
-            e.target.getCanvas().style.cursor = "grab";
+            if (props.onMove) {
+                e.target.getCanvas().style.cursor = "grab";
 
-            e.preventDefault();
+                e.preventDefault();
 
-            e.target.on("mousemove", onMove);
-            e.target.once("mouseup", onUp);
+                e.target.on("mousemove", onMove);
+
+                e.target.once("mouseup", onUp);
+            }
         },
         [onMove, onUp],
+    );
+
+    useMapLayerCallback(
+        "click",
+        props.id,
+        (e) => {
+            if (hoveredElement.current && props.onClick) {
+                props.onClick(
+                    Object.assign(e, { feature: hoveredElement.current }),
+                );
+            }
+        },
+        [props.onClick, hoveredElement.current],
     );
 
     return <Layer {...props} />;
