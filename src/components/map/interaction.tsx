@@ -6,7 +6,7 @@ import useMapCallback from "@/hooks/map/use-map-callback";
 import useMouseMapLocation from "@/hooks/map/use-mouse-map-location";
 import useKeyDown from "@/hooks/use-key-down";
 import type { EditorSpline } from "@/lib/splines";
-import CubicBSpline from "@/lib/splines/b-spline";
+import BezierSpline from "@/lib/splines/bezier";
 import {
     getSplineController,
     type SplineData,
@@ -50,7 +50,7 @@ export default function MapInteraction() {
             if (activeSpline === null && activeTool === "spline") {
                 dispatch(
                     addSpline(
-                        CubicBSpline.withInitialPoint(
+                        BezierSpline.withInitialPoint(
                             new Vector(event.lngLat.toArray()),
                         ).data,
                     ),
@@ -126,24 +126,26 @@ function SplineHandles({ controller, updateData }: SplineHandlesProps) {
         <>
             {editorPoints.length >= 2 && (
                 <>
-                    <Source
-                        type="geojson"
-                        data={lineString([
-                            ...editorPoints.map((coord) => coord.values),
-                            ...(activeTool === "spline"
-                                ? [mouseLocation.toArray()]
-                                : []),
-                        ])}
-                    >
-                        <Layer
-                            type="line"
-                            paint={{
-                                "line-color": "black",
-                                "line-width": 2,
-                                "line-dasharray": [1, 2],
-                            }}
-                        />
-                    </Source>
+                    {!controller.getIsInterpolated() && (
+                        <Source
+                            type="geojson"
+                            data={lineString([
+                                ...editorPoints.map((coord) => coord.values),
+                                ...(activeTool === "spline"
+                                    ? [mouseLocation.toArray()]
+                                    : []),
+                            ])}
+                        >
+                            <Layer
+                                type="line"
+                                paint={{
+                                    "line-color": "black",
+                                    "line-width": 2,
+                                    "line-dasharray": [1, 2],
+                                }}
+                            />
+                        </Source>
+                    )}
                     <Source
                         type="geojson"
                         generateId

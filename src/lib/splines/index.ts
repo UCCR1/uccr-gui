@@ -27,6 +27,8 @@ export abstract class EditorSpline<T>
 
     public abstract getEditorPoints(): Vector[];
 
+    public abstract getIsInterpolated(): boolean;
+
     public renderSpline(
         maxSegmentLength: number,
         mousePoint?: Vector,

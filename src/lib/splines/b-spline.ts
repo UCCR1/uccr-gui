@@ -13,6 +13,10 @@ export const cubicBSplineData = zod.object({
 export type CubicBSplineData = zod.infer<typeof cubicBSplineData>;
 
 export default class CubicBSpline extends EditorSpline<CubicBSplineData> {
+    public getIsInterpolated() {
+        return false;
+    }
+
     public static withInitialPoint(point: Vector): CubicBSpline {
         return new CubicBSpline({
             type: NAME,
