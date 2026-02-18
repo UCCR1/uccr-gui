@@ -3,10 +3,10 @@ import * as zod from "zod";
 import { vectorData } from "../math-types";
 import { EditorSpline } from ".";
 
-const NAME = "cubic-b-spline";
+export const B_SPLINE_NAME = "B-Spline";
 
 export const cubicBSplineData = zod.object({
-    type: zod.literal(NAME),
+    type: zod.literal(B_SPLINE_NAME),
     points: zod.array(vectorData),
 });
 
@@ -26,7 +26,7 @@ export default class CubicBSpline extends EditorSpline<CubicBSplineData> {
 
     public static withInitialPoint(point: Vector): CubicBSpline {
         return new CubicBSpline({
-            type: NAME,
+            type: B_SPLINE_NAME,
             points: [vectorData.parse(point.values)],
         });
     }
@@ -76,7 +76,7 @@ export default class CubicBSpline extends EditorSpline<CubicBSplineData> {
         newPoints.splice(index, 0, vectorData.parse(position.values));
 
         return {
-            type: NAME,
+            type: B_SPLINE_NAME,
             points: newPoints,
         };
     }
@@ -90,7 +90,7 @@ export default class CubicBSpline extends EditorSpline<CubicBSplineData> {
         newPoints[index] = vectorData.parse(position.values);
 
         return {
-            type: NAME,
+            type: B_SPLINE_NAME,
             points: newPoints,
         };
     }
@@ -101,7 +101,7 @@ export default class CubicBSpline extends EditorSpline<CubicBSplineData> {
         newPoints.splice(index, 1);
 
         return {
-            type: NAME,
+            type: B_SPLINE_NAME,
             points: newPoints,
         };
     }

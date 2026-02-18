@@ -1,14 +1,15 @@
 import { featureCollection, lineString, point } from "@turf/helpers";
 import { Layer, Source } from "@vis.gl/react-maplibre";
 import { useCallback, useEffect, useMemo } from "react";
+import { CubicBezierCurve } from "three";
 import { Vector } from "ts-matrix";
 import useMapCallback from "@/hooks/map/use-map-callback";
 import useMouseMapLocation from "@/hooks/map/use-mouse-map-location";
 import useKeyDown from "@/hooks/use-key-down";
 import type { EditorSpline } from "@/lib/splines";
-import BezierSpline from "@/lib/splines/bezier";
 import {
     getSplineController,
+    SPLINE_MAP,
     type SplineData,
 } from "@/lib/splines/spline-data";
 import { useAppDispatch, useAppSelector } from "@/state";
@@ -49,20 +50,22 @@ export default function MapInteraction() {
 
     const activeTool = useAppSelector((state) => state.autonEditor.activeTool);
 
+    const splineType = useAppSelector((state) => state.autonEditor.splineType);
+
     useMapCallback(
         "click",
         (event) => {
             if (activeSpline === null && activeTool === "spline") {
                 dispatch(
                     addSpline(
-                        BezierSpline.withInitialPoint(
+                        SPLINE_MAP[splineType].withInitialPoint(
                             new Vector(event.lngLat.toArray()),
                         ).data,
                     ),
                 );
             }
         },
-        [activeSpline, activeTool, dispatch, addSpline],
+        [activeSpline, activeTool, dispatch, addSpline, splineType],
     );
 
     useEffect(() => {

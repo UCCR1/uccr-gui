@@ -3,10 +3,10 @@ import * as zod from "zod";
 import { vectorData } from "../math-types";
 import { EditorSpline } from ".";
 
-const NAME = "bezier-spline";
+export const BEZIER_NAME = "Bezier";
 
 export const bezierSplineData = zod.object({
-    type: zod.literal(NAME),
+    type: zod.literal(BEZIER_NAME),
     points: zod.array(zod.object({ point: vectorData, direction: vectorData })),
 });
 
@@ -54,14 +54,14 @@ export default class BezierSpline extends EditorSpline<BezierSplineData> {
         };
 
         return {
-            type: NAME,
+            type: BEZIER_NAME,
             points: newPoints,
         };
     }
 
     public static withInitialPoint(point: Vector): BezierSpline {
         return new BezierSpline({
-            type: NAME,
+            type: BEZIER_NAME,
             points: [
                 { point: vectorData.parse(point.values), direction: [0, 1] },
             ],
@@ -140,7 +140,7 @@ export default class BezierSpline extends EditorSpline<BezierSplineData> {
         });
 
         return {
-            type: NAME,
+            type: BEZIER_NAME,
             points: newPoints,
         };
     }
@@ -157,7 +157,7 @@ export default class BezierSpline extends EditorSpline<BezierSplineData> {
         };
 
         return {
-            type: NAME,
+            type: BEZIER_NAME,
             points: newPoints,
         };
     }
@@ -168,7 +168,7 @@ export default class BezierSpline extends EditorSpline<BezierSplineData> {
         newPoints.splice(index, 1);
 
         return {
-            type: NAME,
+            type: BEZIER_NAME,
             points: newPoints,
         };
     }

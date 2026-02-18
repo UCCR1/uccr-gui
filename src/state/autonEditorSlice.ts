@@ -1,5 +1,9 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { SplineData } from "@/lib/splines/spline-data";
+import {
+    type SplineData,
+    type SplineType,
+    splineTypes,
+} from "@/lib/splines/spline-data";
 
 export type EditorTool = "drag" | "spline";
 
@@ -8,6 +12,7 @@ interface AutonEditorState {
     activeSplineIndex: number | null;
     activeControlPointIndex: number | null;
 
+    splineType: SplineType;
     activeTool: EditorTool;
 }
 
@@ -16,6 +21,7 @@ const initialState: AutonEditorState = {
     activeSplineIndex: null,
     activeControlPointIndex: null,
 
+    splineType: splineTypes[0],
     activeTool: "drag",
 };
 
@@ -43,8 +49,16 @@ const autonEditorSlice = createSlice({
         },
 
         setActiveSpline(state, action: PayloadAction<number | null>) {
-            state.activeSplineIndex = action.payload;
+            const index = action.payload;
+
+            state.activeSplineIndex = index;
             state.activeControlPointIndex = null;
+
+            if (index !== null) {
+                const spline = state.splines[index];
+
+                state.splineType = spline.type;
+            }
         },
 
         setActiveControlPoint(state, action: PayloadAction<number | null>) {
@@ -56,6 +70,10 @@ const autonEditorSlice = createSlice({
         setActiveTool(state, action: PayloadAction<EditorTool>) {
             state.activeTool = action.payload;
         },
+
+        setSplineType(state, action: PayloadAction<SplineType>) {
+            state.splineType = action.payload;
+        },
     },
 });
 
@@ -65,6 +83,7 @@ export const {
     setActiveSpline,
     setActiveControlPoint,
     setActiveTool,
+    setSplineType,
 } = autonEditorSlice.actions;
 
 export default autonEditorSlice.reducer;

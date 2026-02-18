@@ -12,7 +12,10 @@ export default function AutonRenderer() {
     const activeSplineIndex = useAppSelector(
         (state) => state.autonEditor.activeSplineIndex,
     );
+
     const splines = useAppSelector((state) => state.autonEditor.splines);
+
+    const activeTool = useAppSelector((state) => state.autonEditor.activeTool);
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: Avoid re-rendering all splines when only the currently edited spline is changing, and that is handled elsewhere
     const splinePaths = useMemo(() => {
@@ -51,7 +54,7 @@ export default function AutonRenderer() {
                         "black",
                     ],
                 }}
-                clickable={activeSplineIndex === null}
+                clickable={activeSplineIndex === null && activeTool === "drag"}
                 onClick={(event) => {
                     dispatch(setActiveSpline(event.feature.properties.index));
                 }}
