@@ -10,7 +10,17 @@ interface SplineControls<T> {
     addEditorPoint(index: number, position: Vector): T;
     updateEditorPoint(index: number, newPosition: Vector): T;
     removeEditorPoint(index: number): T;
+
     getEditorPoints(): Vector[];
+
+    getEditorPointHandles(index: number): Vector[];
+    updateEditorPointHandle(
+        editorPointIndex: number,
+        handleIndex: number,
+        newPosition: Vector,
+    ): T;
+
+    get hasEditorPointHandles(): boolean;
 }
 
 export abstract class EditorSpline<T>
@@ -26,8 +36,16 @@ export abstract class EditorSpline<T>
     public abstract removeEditorPoint(index: number): T;
 
     public abstract getEditorPoints(): Vector[];
+    public abstract getEditorPointHandles(index: number): Vector[];
+    public abstract updateEditorPointHandle(
+        editorPointIndex: number,
+        handleIndex: number,
+        newPosition: Vector,
+    ): T;
 
-    public abstract getIsInterpolated(): boolean;
+    public abstract get hasEditorPointHandles(): boolean;
+
+    public abstract get isInterpolated(): boolean;
 
     public renderSpline(
         maxSegmentLength: number,

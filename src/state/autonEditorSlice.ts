@@ -6,12 +6,15 @@ export type EditorTool = "drag" | "spline";
 interface AutonEditorState {
     splines: SplineData[];
     activeSplineIndex: number | null;
+    activeControlPointIndex: number | null;
+
     activeTool: EditorTool;
 }
 
 const initialState: AutonEditorState = {
     splines: [],
     activeSplineIndex: null,
+    activeControlPointIndex: null,
 
     activeTool: "drag",
 };
@@ -41,6 +44,13 @@ const autonEditorSlice = createSlice({
 
         setActiveSpline(state, action: PayloadAction<number | null>) {
             state.activeSplineIndex = action.payload;
+            state.activeControlPointIndex = null;
+        },
+
+        setActiveControlPoint(state, action: PayloadAction<number | null>) {
+            if (state.activeSplineIndex !== null) {
+                state.activeControlPointIndex = action.payload;
+            }
         },
 
         setActiveTool(state, action: PayloadAction<EditorTool>) {
@@ -49,7 +59,12 @@ const autonEditorSlice = createSlice({
     },
 });
 
-export const { addSpline, updateSpline, setActiveSpline, setActiveTool } =
-    autonEditorSlice.actions;
+export const {
+    addSpline,
+    updateSpline,
+    setActiveSpline,
+    setActiveControlPoint,
+    setActiveTool,
+} = autonEditorSlice.actions;
 
 export default autonEditorSlice.reducer;

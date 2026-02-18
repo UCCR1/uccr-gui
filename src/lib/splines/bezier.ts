@@ -13,8 +13,50 @@ export const bezierSplineData = zod.object({
 export type BezierSplineData = zod.infer<typeof bezierSplineData>;
 
 export default class BezierSpline extends EditorSpline<BezierSplineData> {
-    public getIsInterpolated() {
-        return true;
+    public readonly isInterpolated = true;
+    public readonly hasEditorPointHandles = true;
+
+    public getEditorPointHandles(index: number): Vector[] {
+        const point = this.data.points[index];
+
+        const position = new Vector(point.point);
+        const direction = new Vector(point.direction);
+
+        if (index === 0) {
+            return [position.add(direction)];
+        } else if (index === this.data.points.length - 1) {
+            return [position.subtract(direction)];
+        }
+
+        return [position.subtract(direction), position.add(direction)];
+    }
+
+    public updateEditorPointHandle(
+        editorPointIndex: number,
+        handleIndex: number,
+        newPosition: Vector,
+    ): BezierSplineData {
+        const controlPosition = new Vector(
+            this.data.points[editorPointIndex].point,
+        );
+
+        let direction = newPosition.subtract(controlPosition);
+
+        if (handleIndex === 0 && editorPointIndex !== 0) {
+            direction = direction.negate();
+        }
+
+        const newPoints = [...this.data.points];
+
+        newPoints[editorPointIndex] = {
+            point: vectorData.parse(controlPosition.values),
+            direction: vectorData.parse(direction.values),
+        };
+
+        return {
+            type: NAME,
+            points: newPoints,
+        };
     }
 
     public static withInitialPoint(point: Vector): BezierSpline {

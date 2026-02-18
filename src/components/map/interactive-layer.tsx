@@ -97,9 +97,11 @@ export default function InteractiveLayer(props: InteractiveLayerProps) {
 
     const onUp = useCallback(
         (e: MapMouseEvent) => {
-            dragging.current = false;
+            if (dragging.current) {
+                clearHover();
+            }
 
-            clearHover();
+            dragging.current = false;
 
             e.target.getCanvas().style.cursor = "";
 
@@ -176,6 +178,8 @@ export default function InteractiveLayer(props: InteractiveLayerProps) {
                     Object.assign(e, { feature: hoveredElement.current }),
                 );
             }
+
+            clearHover();
         },
         [props.onClick, hoveredElement.current],
     );
