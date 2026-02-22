@@ -59,7 +59,7 @@ function EditorToolBar() {
     );
 
     return (
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-card p-2 rounded-md flex gap-2">
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-card p-2 rounded-md flex">
             <ToggleGroup
                 type="single"
                 spacing={2}
@@ -73,9 +73,13 @@ function EditorToolBar() {
                 </ToggleGroupItem>
                 <ToggleGroupItem
                     value="spline"
-                    className={clsx(activeTool === "spline" && "pr-0")}
+                    className={clsx(
+                        activeTool === "spline" && "rounded-r-none",
+                    )}
                 >
                     <PenTool />
+                </ToggleGroupItem>
+            </ToggleGroup>
                     {activeTool === "spline" && (
                         <Select
                             disabled={hasActiveSpline}
@@ -84,7 +88,7 @@ function EditorToolBar() {
                                 dispatch(setSplineType(type as SplineType))
                             }
                         >
-                            <SelectTrigger className="w-[110px]">
+                    <SelectTrigger className="w-[110px] rounded-l-none">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -98,8 +102,6 @@ function EditorToolBar() {
                             </SelectContent>
                         </Select>
                     )}
-                </ToggleGroupItem>
-            </ToggleGroup>
         </div>
     );
 }
