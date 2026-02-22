@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import type { AutonData, AutonSegment } from "@/lib/auton";
 import {
-    type SplineData,
+    type SplineGeometry,
     type SplineType,
     splineTypes,
 } from "@/lib/splines/spline-data";
@@ -8,8 +9,8 @@ import {
 export type EditorTool = "drag" | "spline";
 
 interface AutonEditorState {
-    splines: SplineData[];
-    activeSplineIndex: number | null;
+    auton: AutonData | null;
+    activeSegmentIndex: number | null;
     activeControlPointIndex: number | null;
 
     splineType: SplineType;
@@ -17,8 +18,12 @@ interface AutonEditorState {
 }
 
 const initialState: AutonEditorState = {
-    splines: [],
-    activeSplineIndex: null,
+    auton: {
+        name: "Auton1",
+        segments: [],
+    },
+
+    activeSegmentIndex: null,
     activeControlPointIndex: null,
 
     splineType: splineTypes[0],
@@ -29,40 +34,61 @@ const autonEditorSlice = createSlice({
     name: "autonEditor",
     initialState,
     reducers: {
-        addSpline(state, action: PayloadAction<SplineData>) {
-            state.splines.push(action.payload);
+        addSegment(state, action: PayloadAction<SplineGeometry>) {
+            if (state.auton === null) return;
 
-            state.activeSplineIndex = state.splines.length - 1;
+            state.auton.segments.push({
+                geometry: action.payload,
+                name: `Segment ${state.auton.segments.length + 1}`,
+                triggers: [],
+            });
+
+            state.activeSegmentIndex = state.auton.segments.length - 1;
         },
 
-        updateSpline(
+        updateSegmentGeometry(
             state,
-            action: PayloadAction<{ index: number; data: SplineData }>,
+            action: PayloadAction<{ index: number; data: SplineGeometry }>,
         ) {
+            if (state.auton === null) return;
+
             const { index, data } = action.payload;
 
-            if (index >= state.splines.length) {
+            if (index >= state.auton.segments.length) {
                 return;
             }
 
-            state.splines[index] = data;
+            state.auton.segments[index].geometry = data;
         },
 
-        setActiveSpline(state, action: PayloadAction<number | null>) {
+        renameSegment(
+            state,
+            action: PayloadAction<{ index: number; name: string }>,
+        ) {
+            if (state.auton === null) return;
+
+            const { index, name } = action.payload;
+
+            state.auton.segments[index].name = name;
+        },
+
+        setActiveSegment(state, action: PayloadAction<number | null>) {
+            if (state.auton === null) return;
+
             const index = action.payload;
 
-            state.activeSplineIndex = index;
+            state.activeSegmentIndex = index;
             state.activeControlPointIndex = null;
 
             if (index !== null) {
-                const spline = state.splines[index];
+                const spline = state.auton.segments[index].geometry;
 
                 state.splineType = spline.type;
             }
         },
 
         setActiveControlPoint(state, action: PayloadAction<number | null>) {
-            if (state.activeSplineIndex !== null) {
+            if (state.activeSegmentIndex !== null) {
                 state.activeControlPointIndex = action.payload;
             }
         },
@@ -78,9 +104,10 @@ const autonEditorSlice = createSlice({
 });
 
 export const {
-    addSpline,
-    updateSpline,
-    setActiveSpline,
+    addSegment,
+    updateSegmentGeometry,
+    renameSegment,
+    setActiveSegment,
     setActiveControlPoint,
     setActiveTool,
     setSplineType,

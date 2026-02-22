@@ -3,17 +3,19 @@ import { Source } from "@vis.gl/react-maplibre";
 import { useMemo } from "react";
 import { getSplineController } from "@/lib/splines/spline-data";
 import { useAppDispatch, useAppSelector } from "@/state";
-import { setActiveSpline } from "@/state/autonEditorSlice";
+import { setActiveSegment } from "@/state/autonEditorSlice";
 import InteractiveLayer, { IS_HOVERED_KEY } from "./interactive-layer";
 
 const SPLINE_TOLERANCE = 0.01;
 
 export default function AutonRenderer() {
     const activeSplineIndex = useAppSelector(
-        (state) => state.autonEditor.activeSplineIndex,
+        (state) => state.autonEditor.activeSegmentIndex,
     );
 
-    const splines = useAppSelector((state) => state.autonEditor.splines);
+    const splines = useAppSelector(
+        (state) => state.autonEditor.auton?.segments ?? [],
+    );
 
     const activeTool = useAppSelector((state) => state.autonEditor.activeTool);
 
@@ -26,7 +28,7 @@ export default function AutonRenderer() {
                 }
 
                 return lineString(
-                    getSplineController(x)
+                    getSplineController(x.geometry)
                         .renderSpline(SPLINE_TOLERANCE)
                         .map((vector) => vector.values),
                     {
@@ -56,7 +58,7 @@ export default function AutonRenderer() {
                 }}
                 clickable={activeSplineIndex === null && activeTool === "drag"}
                 onClick={(event) => {
-                    dispatch(setActiveSpline(event.feature.properties.index));
+                    dispatch(setActiveSegment(event.feature.properties.index));
                 }}
             />
         </Source>

@@ -1,48 +1,42 @@
 import { featureCollection, lineString, point } from "@turf/helpers";
 import { Layer, Source } from "@vis.gl/react-maplibre";
 import { useCallback, useEffect, useMemo } from "react";
-import { CubicBezierCurve } from "three";
 import { Vector } from "ts-matrix";
 import useMapCallback from "@/hooks/map/use-map-callback";
 import useMouseMapLocation from "@/hooks/map/use-mouse-map-location";
+import useActiveSpline from "@/hooks/use-active-spline";
 import useKeyDown from "@/hooks/use-key-down";
 import type { EditorSpline } from "@/lib/splines";
-import {
-    getSplineController,
-    SPLINE_MAP,
-    type SplineData,
-} from "@/lib/splines/spline-data";
+import { SPLINE_MAP, type SplineGeometry } from "@/lib/splines/spline-data";
 import { useAppDispatch, useAppSelector } from "@/state";
 import {
-    addSpline,
+    addSegment,
     setActiveControlPoint,
-    setActiveSpline,
+    setActiveSegment,
     setActiveTool,
-    updateSpline,
+    updateSegmentGeometry,
 } from "@/state/autonEditorSlice";
 import InteractiveLayer, { IS_HOVERED_KEY } from "./interactive-layer";
 
 export default function MapInteraction() {
     const activeSplineIndex = useAppSelector(
-        (state) => state.autonEditor.activeSplineIndex,
+        (state) => state.autonEditor.activeSegmentIndex,
     );
 
     const activeControlPointIndex = useAppSelector(
         (state) => state.autonEditor.activeControlPointIndex,
     );
 
-    const activeSpline = useAppSelector((state) =>
-        activeSplineIndex !== null
-            ? getSplineController(state.autonEditor.splines[activeSplineIndex])
-            : null,
-    );
+    const activeSpline = useActiveSpline();
 
     const dispatch = useAppDispatch();
 
     const updateSplineData = useCallback(
-        (data: SplineData) => {
+        (data: SplineGeometry) => {
             if (activeSplineIndex !== null) {
-                dispatch(updateSpline({ index: activeSplineIndex, data }));
+                dispatch(
+                    updateSegmentGeometry({ index: activeSplineIndex, data }),
+                );
             }
         },
         [activeSplineIndex, dispatch],
@@ -57,7 +51,7 @@ export default function MapInteraction() {
         (event) => {
             if (activeSpline === null && activeTool === "spline") {
                 dispatch(
-                    addSpline(
+                    addSegment(
                         SPLINE_MAP[splineType].withInitialPoint(
                             new Vector(event.lngLat.toArray()),
                         ).data,
@@ -65,7 +59,7 @@ export default function MapInteraction() {
                 );
             }
         },
-        [activeSpline, activeTool, dispatch, addSpline, splineType],
+        [activeSpline, activeTool, dispatch, addSegment, splineType],
     );
 
     useEffect(() => {
@@ -85,7 +79,7 @@ export default function MapInteraction() {
                 if (activeControlPointIndex !== null) {
                     dispatch(setActiveControlPoint(null));
                 } else if (activeSplineIndex !== null) {
-                    dispatch(setActiveSpline(null));
+                    dispatch(setActiveSegment(null));
                 }
             }
         }
@@ -104,8 +98,8 @@ export default function MapInteraction() {
 }
 
 interface SplineHandlesProps {
-    controller: EditorSpline<SplineData>;
-    updateData: (data: SplineData) => void;
+    controller: EditorSpline<SplineGeometry>;
+    updateData: (data: SplineGeometry) => void;
 }
 
 function SplineHandles({ controller, updateData }: SplineHandlesProps) {
