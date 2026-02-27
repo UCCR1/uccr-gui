@@ -1,6 +1,44 @@
 import { Matrix, Vector } from "ts-matrix";
 
-export function evaluateSpline(
+export function renderSpline(
+    characteristicMatrix: Matrix,
+    controlPoints: Vector[][],
+    maxSegmentLength: number,
+) {
+    const initialPoints = Array.from({
+        length: controlPoints.flat().length,
+    }).map<[Vector, number]>((_, i) => {
+        const t =
+            i * (controlPoints.length / (controlPoints.flat().length - 1));
+
+        return [
+            evaluateSplinePosition(characteristicMatrix, controlPoints, t),
+            t,
+        ];
+    });
+
+    let i = 0;
+
+    // Iterate over generated segments inserting mid points, only continuing once the current segment is shorter than the maxSegmentLength
+    while (i < initialPoints.length - 1) {
+        const [currentPoint, t0] = initialPoints[i];
+        const [nextPoint, t1] = initialPoints[i + 1];
+
+        if (nextPoint.distanceFrom(currentPoint) > maxSegmentLength) {
+            const t = (t0 + t1) / 2;
+            initialPoints.splice(i + 1, 0, [
+                evaluateSplinePosition(characteristicMatrix, controlPoints, t),
+                t,
+            ]);
+        } else {
+            i++;
+        }
+    }
+
+    return initialPoints.map<[number, Vector]>(([vector, t]) => [t, vector]);
+}
+
+export function evaluateSplinePosition(
     characteristicMatrix: Matrix,
     controlPoints: Vector[][],
     t: number,

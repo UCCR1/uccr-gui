@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { AutonData, AutonSegment } from "@/lib/auton";
+import type { AutonData } from "@/lib/auton";
 import {
     type SplineGeometry,
     type SplineType,
@@ -15,6 +15,8 @@ interface AutonEditorState {
 
     splineType: SplineType;
     activeTool: EditorTool;
+
+    scrubLocation: number;
 }
 
 const initialState: AutonEditorState = {
@@ -28,6 +30,8 @@ const initialState: AutonEditorState = {
 
     splineType: splineTypes[0],
     activeTool: "drag",
+
+    scrubLocation: 0,
 };
 
 const autonEditorSlice = createSlice({
@@ -79,6 +83,7 @@ const autonEditorSlice = createSlice({
 
             state.activeSegmentIndex = index;
             state.activeControlPointIndex = null;
+            state.scrubLocation = 0;
 
             if (index !== null) {
                 const spline = state.auton.segments[index].geometry;
@@ -100,6 +105,10 @@ const autonEditorSlice = createSlice({
         setSplineType(state, action: PayloadAction<SplineType>) {
             state.splineType = action.payload;
         },
+
+        setScrubLocation(state, action: PayloadAction<number>) {
+            state.scrubLocation = action.payload;
+        },
     },
 });
 
@@ -111,6 +120,7 @@ export const {
     setActiveControlPoint,
     setActiveTool,
     setSplineType,
+    setScrubLocation,
 } = autonEditorSlice.actions;
 
 export default autonEditorSlice.reducer;

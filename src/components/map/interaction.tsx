@@ -6,6 +6,7 @@ import useMapCallback from "@/hooks/map/use-map-callback";
 import useMouseMapLocation from "@/hooks/map/use-mouse-map-location";
 import useActiveSpline from "@/hooks/use-active-spline";
 import useKeyDown from "@/hooks/use-key-down";
+import { vectorData } from "@/lib/math-types";
 import type { EditorSpline } from "@/lib/splines";
 import { SPLINE_MAP, type SplineGeometry } from "@/lib/splines/spline-data";
 import { useAppDispatch, useAppSelector } from "@/state";
@@ -139,6 +140,14 @@ function SplineHandles({ controller, updateData }: SplineHandlesProps) {
                 .map((vector) => vector.values),
         );
     }, [controller, mouseLocation, activeTool]);
+
+    const scrubLocation = useAppSelector(
+        (state) => state.autonEditor.scrubLocation,
+    );
+
+    const scrubPoint = vectorData.safeParse(
+        controller.evaluatePosition(scrubLocation)?.values,
+    ).data;
 
     const dispatch = useAppDispatch();
 
@@ -326,6 +335,18 @@ function SplineHandles({ controller, updateData }: SplineHandlesProps) {
                     }}
                 />
             </Source>
+
+            {scrubPoint && (
+                <Source type="geojson" data={point(scrubPoint)}>
+                    <Layer
+                        type="circle"
+                        paint={{
+                            "circle-radius": 10,
+                            "circle-color": "white",
+                        }}
+                    />
+                </Source>
+            )}
         </>
     );
 }

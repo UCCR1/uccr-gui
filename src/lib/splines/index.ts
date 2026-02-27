@@ -1,5 +1,5 @@
 import type { Matrix, Vector } from "ts-matrix";
-import { evaluateSpline } from "./math";
+import { evaluateSplinePosition, renderSpline } from "./math";
 
 interface MathematicalSpline {
     getCharacteristicMatrix(): Matrix;
@@ -26,7 +26,28 @@ interface SplineControls<T> {
 export abstract class EditorSpline<T>
     implements MathematicalSpline, SplineControls<T>
 {
-    constructor(public readonly data: T) {}
+    private distanceMap: [number, number][] = [];
+
+    constructor(public readonly data: T) {
+        const characteristicMatrix = this.getCharacteristicMatrix();
+        const controlPoints = this.getControlPoints();
+
+        if (controlPoints.length === 0) {
+            return;
+        }
+
+        const path = renderSpline(characteristicMatrix, controlPoints, 0.01);
+
+        let pathLength = 0;
+
+        this.distanceMap = path.map(([t, vector], i) => {
+            if (i === 0) return [0, 0];
+
+            pathLength += path[i - 1][1].distanceFrom(vector);
+
+            return [t, pathLength];
+        });
+    }
 
     public abstract getCharacteristicMatrix(): Matrix;
     public abstract getControlPoints(mousePoint?: Vector): Vector[][];
@@ -47,6 +68,62 @@ export abstract class EditorSpline<T>
 
     public abstract get isInterpolated(): boolean;
 
+    public getMaxT() {
+        return this.distanceMap[this.distanceMap.length - 1]?.[0] ?? 0;
+    }
+
+    public getTAt(distance: number) {
+        if (distance === 0) return 0;
+
+        for (let i = 0; i < this.distanceMap.length; i++) {
+            const [currentT, currentDistance] = this.distanceMap[i];
+
+            if (currentDistance < distance) continue;
+
+            if (currentDistance === distance) {
+                return currentT;
+            }
+
+            const [previousT, previousDistance] = this.distanceMap[i - 1];
+
+            return (
+                previousT +
+                ((currentT - previousT) * (distance - previousDistance)) /
+                    (currentDistance - previousDistance)
+            );
+        }
+
+        throw new Error(`distance: ${distance} is out of range`);
+    }
+
+    public getLengthAt(t: number) {
+        if (t === 0) return 0;
+
+        for (let i = 0; i < this.distanceMap.length; i++) {
+            const [currentT, currentDistance] = this.distanceMap[i];
+
+            if (currentT < t) continue;
+
+            if (currentT === t) {
+                return currentDistance;
+            }
+
+            const [previousT, previousDistance] = this.distanceMap[i - 1];
+
+            return (
+                previousDistance +
+                ((currentDistance - previousDistance) * (t - previousT)) /
+                    (currentT - previousT)
+            );
+        }
+
+        throw new Error(`t: ${t} is out of range`);
+    }
+
+    public getLength() {
+        return this.distanceMap[this.distanceMap.length - 1]?.[1] ?? 0;
+    }
+
     public renderSpline(
         maxSegmentLength: number,
         mousePoint?: Vector,
@@ -59,37 +136,16 @@ export abstract class EditorSpline<T>
         }
 
         //Evaluate one point for every initial control point
-        const initialPoints = Array.from({
-            length: controlPoints.flat().length,
-        }).map<[Vector, number]>((_, i) => {
-            const t =
-                i * (controlPoints.length / (controlPoints.flat().length - 1));
+        const points = renderSpline(
+            characteristicMatrix,
+            controlPoints,
+            maxSegmentLength,
+        );
 
-            return [evaluateSpline(characteristicMatrix, controlPoints, t), t];
-        });
-
-        let i = 0;
-
-        // Iterate over generated segments inserting mid points, only continuing once the current segment is shorter than the maxSegmentLength
-        while (i < initialPoints.length - 1) {
-            const [currentPoint, t0] = initialPoints[i];
-            const [nextPoint, t1] = initialPoints[i + 1];
-
-            if (nextPoint.distanceFrom(currentPoint) > maxSegmentLength) {
-                const t = (t0 + t1) / 2;
-                initialPoints.splice(i + 1, 0, [
-                    evaluateSpline(characteristicMatrix, controlPoints, t),
-                    t,
-                ]);
-            } else {
-                i++;
-            }
-        }
-
-        return initialPoints.map(([vector]) => vector);
+        return points.map(([_t, vector]) => vector);
     }
 
-    public evaluate(t: number): Vector | null {
+    public evaluatePosition(t: number): Vector | null {
         const characteristicMatrix = this.getCharacteristicMatrix();
         const controlPoints = this.getControlPoints();
 
@@ -97,6 +153,6 @@ export abstract class EditorSpline<T>
             return null;
         }
 
-        return evaluateSpline(characteristicMatrix, controlPoints, t);
+        return evaluateSplinePosition(characteristicMatrix, controlPoints, t);
     }
 }
